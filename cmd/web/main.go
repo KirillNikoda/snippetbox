@@ -2,42 +2,30 @@ package main
 
 import (
 	"flag"
-	"github.com/sirupsen/logrus"
 	"log"
 	"net/http"
+
+	"github.com/sirupsen/logrus"
 )
 
-
 var (
-	addr = flag.String("addr", ":4000", "HTTP network address")
+	addr = flag.String("addr", ":4000", "HTTP network address(default is :4000)")
 )
 
 type app struct {
 	logger *logrus.Logger
 }
 
-
 func main() {
 	flag.Parse()
-	// Creating app instance
+	// Creating an app instance
 	a := &app{
 		logger: logrus.New(),
 	}
-	// Creating router instance
-	mux := http.NewServeMux()
-	// Adding mapping urls
-	mux.HandleFunc("/", a.home)
-	mux.HandleFunc("/snippet", a.showSnippet)
-	mux.HandleFunc("/snippet/create", a.createSnippet)
-
-	// Serving static files
-	fileServer := http.FileServer(http.Dir("./ui/static/"))
-	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 
 	srv := &http.Server{
-		Addr:
-		*addr,
-		Handler: mux,
+		Addr:    *addr,
+		Handler: a.routes(),
 	}
 
 	// Force server to start listening requests
