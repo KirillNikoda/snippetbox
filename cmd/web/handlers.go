@@ -1,35 +1,45 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"html/template"
+	"knikoda/snippetbox/pkg/models"
 	"net/http"
 	"strconv"
 )
 
 func (a *app) home(w http.ResponseWriter, r *http.Request) {
+
 	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+		a.notFound(w)
 		return
 	}
-
-	files := []string{
-		"./ui/html/home.page.gohtml",
-		"./ui/html/base.layout.gohtml",
-		"./ui/html/footer.partial.gohtml",
-	}
-
-	ts, err := template.ParseFiles(files...)
-	fmt.Println(ts.Name())
+	s, err := a.snippets.Latest()
 	if err != nil {
 		a.serverError(w, err)
 		return
 	}
-
-	err = ts.Execute(w, nil)
-	if err != nil {
-		a.serverError(w, err)
+	for _, snippet := range s {
+		fmt.Fprintf(w, "%v\n", snippet)
 	}
+
+	// files := []string{
+	// 	"./ui/html/home.page.gohtml",
+	// 	"./ui/html/base.layout.gohtml",
+	// 	"./ui/html/footer.partial.gohtml",
+	// }
+
+	// ts, err := template.ParseFiles(files...)
+	// fmt.Println(ts.Name())
+	// if err != nil {
+	// 	a.serverError(w, err)
+	// 	return
+	// }
+
+	// err = ts.Execute(w, nil)
+	// if err != nil {
+	// 	a.serverError(w, err)
+	// }
 }
 
 func (a *app) showSnippet(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +48,17 @@ func (a *app) showSnippet(w http.ResponseWriter, r *http.Request) {
 		a.notFound(w)
 		return
 	}
-	fmt.Fprintf(w, "Display a specific snippet with ID %d...", id)
+
+	s, err := a.snippets.Get(id)
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			a.notFound(w)
+			return
+		}
+		a.serverError(w, err)
+	}
+
+	fmt.Fprintf(w, "%v", s)
 }
 
 func (a *app) createSnippet(w http.ResponseWriter, r *http.Request) {

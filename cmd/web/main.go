@@ -52,7 +52,7 @@ func main() {
 
 	a := &app{
 		logger:   logrus.New(),
-		snippets: &postgres.SnippetModel{DB: db},
+		snippets: postgres.New(db),
 	}
 
 	srv := &http.Server{
